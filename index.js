@@ -56,27 +56,29 @@ async function getLuckyBlockStats(gameType, playerName) {
             "Void Kills": playerData.stats.Bedwars[`${modePrefix}_void_kills_bedwars`] || 0,
             "Mob Kills": playerData.stats.Bedwars[`${modePrefix}_entity_attack_kills_bedwars`] || 0,
             "Creeper Kills": playerData.stats.Bedwars[`${modePrefix}_entity_explosion_kills_bedwars`] || 0,
-            "Thorn Kills": playerData.stats.Bedwars[`${modePrefix}_thorn_kills_bedwars`] || 0,
+            "Thorn Kills": playerData.stats.Bedwars[`${modePrefix}_thorns_kills_bedwars`] || 0,
             "Deaths": playerData.stats.Bedwars[`${modePrefix}_deaths_bedwars`] || 0,
             "Void Deaths": playerData.stats.Bedwars[`${modePrefix}_void_deaths_bedwars`] || 0,
             "Mob Deaths": playerData.stats.Bedwars[`${modePrefix}_entity_attack_deaths_bedwars`] || 0,
             "Fall Damage Deaths": playerData.stats.Bedwars[`${modePrefix}_fall_deaths_bedwars`] || 0,
-            "Thorn Deaths": playerData.stats.Bedwars[`${modePrefix}_thorn_deaths_bedwars`] || 0,
+            "Thorn Deaths": playerData.stats.Bedwars[`${modePrefix}_thorns_deaths_bedwars`] || 0,
             "Final Kills": playerData.stats.Bedwars[`${modePrefix}_final_kills_bedwars`] || 0,
             "Void Final Kills": playerData.stats.Bedwars[`${modePrefix}_void_final_kills_bedwars`] || 0,
             "Mob Final Kills": playerData.stats.Bedwars[`${modePrefix}_entity_attack_final_kills_bedwars`] || 0,
             "Fall Damage Final Kills": playerData.stats.Bedwars[`${modePrefix}_fall_final_kills_bedwars`] || 0,
             "Lava Final Kills": playerData.stats.Bedwars[`${modePrefix}_lava_final_kills_bedwars`] || 0,
-            "Thorn Final Kills": playerData.stats.Bedwars[`${modePrefix}_thorn_final_kills_bedwars`] || 0,
+            "Thorn Final Kills": playerData.stats.Bedwars[`${modePrefix}_thorns_final_kills_bedwars`] || 0,
             "Final Deaths": playerData.stats.Bedwars[`${modePrefix}_final_deaths_bedwars`] || 0,
             "Void Final Deaths": playerData.stats.Bedwars[`${modePrefix}_void_final_deaths_bedwars`] || 0,
             "Mob Final Deaths": playerData.stats.Bedwars[`${modePrefix}_entity_attack_final_deaths_bedwars`] || 0,
             "Creeper Final Deaths": playerData.stats.Bedwars[`${modePrefix}_entity_explosion_final_deaths_bedwars`] || 0,
             "Lava Final Deaths": playerData.stats.Bedwars[`${modePrefix}_lava_final_deaths_bedwars`] || 0,
-            "Thorn Final Deaths": playerData.stats.Bedwars[`${modePrefix}_thorn_final_deaths_bedwars`] || 0,
+            "Thorn Final Deaths": playerData.stats.Bedwars[`${modePrefix}_thorns_final_deaths_bedwars`] || 0,
             "Placeable beds collected": playerData.stats.Bedwars[`${modePrefix}_bed_resources_collected_bedwars`] || 0,
-            "magic deaths": playerData.stats.Bedwars[`${modePrefix}_magic_deaths_bedwars`] || 0,
-            "block explosion deaths": playerData.stats.Bedwars[`${modePrefix}_block_explosion_deaths_bedwars`] || 0,
+            "Magic Deaths": playerData.stats.Bedwars[`${modePrefix}_magic_deaths_bedwars`] || 0,
+            "Block Explosion Deaths": playerData.stats.Bedwars[`${modePrefix}_block_explosion_deaths_bedwars`] || 0,
+            "Falling Block Deaths Bedwars": playerData.stats.Bedwars[`${modePrefix}_falling_block_deaths_bedwars`] || 0,
+            "Falling Block Final Deaths": playerData.stats.Bedwars[`${modePrefix}_falling_block_final_deaths_bedwars`] || 0,
         };
 
         // Format the stats as a string with each stat on a new line
@@ -84,6 +86,7 @@ async function getLuckyBlockStats(gameType, playerName) {
         for (const [key, value] of Object.entries(luckyBlockStats)) {
             statsMessage += `${key}: ${value}\n`;
         }
+        
 
         return statsMessage;
     } catch (error) {
