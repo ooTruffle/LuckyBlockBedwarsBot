@@ -72,9 +72,9 @@ async function getLuckyBlockStats(gameType, playerName) {
             "Void Final Deaths": playerData.stats.Bedwars[`${modePrefix}_void_final_deaths_bedwars`] || 0,
             "Mob Final Deaths": playerData.stats.Bedwars[`${modePrefix}_entity_attack_final_deaths_bedwars`] || 0,
             "Creeper Final Deaths": playerData.stats.Bedwars[`${modePrefix}_entity_explosion_final_deaths_bedwars`] || 0,
-            "Placeable beds collected": playerData.stats.Bedwars[`${modePrefix}_bed_resources_collected_bedwars`] || 0,
             "Lava Final Deaths": playerData.stats.Bedwars[`${modePrefix}_lava_final_deaths_bedwars`] || 0,
             "Thorn Final Deaths": playerData.stats.Bedwars[`${modePrefix}_thorn_final_deaths_bedwars`] || 0,
+            "Placeable beds collected": playerData.stats.Bedwars[`${modePrefix}_bed_resources_collected_bedwars`] || 0,
             "magic deaths": playerData.stats.Bedwars[`${modePrefix}_magic_deaths_bedwars`] || 0,
             "block explosion deaths": playerData.stats.Bedwars[`${modePrefix}_block_explosion_deaths_bedwars`] || 0,
         };
@@ -100,10 +100,11 @@ async function verifyMinecraftUsername(minecraftUsername) {
     const url = `https://api.hypixel.net/player?key=${process.env.HYPIXEL_API_KEY}&name=${minecraftUsername}`;
     try {
         const response = await axios.get(url);
+
         return response.data.success && response.data.player ? minecraftUsername : null;
     } catch (error) {
         console.error(error);
-        return null;
+        return `Failed to fetch stats for player ${playerName}.`;
     }
 }
 
