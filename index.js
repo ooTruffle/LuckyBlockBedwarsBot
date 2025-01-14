@@ -102,7 +102,6 @@ async function verifyMinecraftUsername(username) {
 async function getLuckyBlockStats(gameType, playerName) {
     const playerData = await cachePlayerData(playerName);
 
-    // Check if there was an error
     if (playerData.error) {
         return playerData.error;
     }
@@ -262,7 +261,7 @@ client.on('interactionCreate', async interaction => {
     if (commandName === 'stats') {
         const gameType = options.getString('gamemode');
         let playerName = options.getString('player');
-        const simple = options.getBoolean('simple') || false; // Get the value of the 'simple' option
+        const simple = options.getBoolean('simple') || false; 
 
         if (! playerName) {
             if (linkedAccounts[user.id]) {
@@ -581,7 +580,6 @@ client.on('interactionCreate', async interaction => {
         try {
             const uuid = await getPlayerUUID(playerName);
 
-            // Use cached stats if available
             let stats = cache[`stats-${playerName}`];
             if (! stats) {
                 stats = await getLuckyBlockStats(gameType, playerName);
@@ -589,7 +587,6 @@ client.on('interactionCreate', async interaction => {
                     await interaction.reply(stats);
                     return;
                 }
-                // Cache the stats
                 cache[`stats-${playerName}`] = stats;
             }
 
@@ -694,79 +691,6 @@ client.on('interactionCreate', async interaction => {
         } catch (error) {
             await interaction.reply(`Failed to fetch player UUID for ${playerName}.`);
         }
-    } else if (commandName === 'simplestats') {
-        const gameType = options.getString('gamemode');
-        let playerName = options.getString('player');
-
-        if (! playerName) {
-            if (linkedAccounts[user.id]) {
-                playerName = linkedAccounts[user.id];
-            } else {
-                await interaction.reply('No player specified and no linked account found.');
-                return;
-            }
-        }
-
-        const stats = await getSimpleLuckyBlockStats(gameType, playerName);
-        if (typeof stats === 'string') {
-            await interaction.reply(stats);
-            return;
-        }
-
-
-        const uuid = await getPlayerUUID(playerName);
-
-
-        const simpleStatsEmbed = new EmbedBuilder().setColor(`#e4ff00`).setTitle(`Simple stats for ${playerName} in Lucky Block ${gameType}`).addFields({
-            name: 'Winstreak',
-            value: stats.Winstreak.toString(),
-            inline: true
-        }, {
-            name: 'Games Played',
-            value: stats["Games Played"].toString(),
-            inline: true
-        }, {
-            name: 'Wins',
-            value: stats.Wins.toString(),
-            inline: true
-        }, {
-            name: 'Loss',
-            value: stats.Loss.toString(),
-            inline: true
-        }, {
-            name: 'Beds Broken',
-            value: stats["Beds Broken"].toString(),
-            inline: true
-        }, {
-            name: 'Beds Lost',
-            value: stats["Beds Lost"].toString(),
-            inline: true
-        }, {
-            name: 'Kills',
-            value: stats.Kills.toString(),
-            inline: true
-        }, {
-            name: 'Deaths',
-            value: stats.Deaths.toString(),
-            inline: true
-        }, {
-            name: 'Final Kills',
-            value: stats["Final Kills"].toString(),
-            inline: true
-        }, {
-            name: 'Final Deaths',
-            value: stats["Final Deaths"].toString(),
-            inline: true
-        }).setTimestamp().setFooter({
-            text: `${
-                interaction.user.tag
-            }`,
-            iconURL: interaction.user.displayAvatarURL(
-                {dynamic: true}
-            )
-        }).setThumbnail(`https://minotar.net/helm/${uuid}.png`);
-
-        await interaction.reply({embeds: [simpleStatsEmbed]});
     } else if (commandName === `info`) {
         const user = await client.users.fetch(`781305692371157034`);
         const avatarURL = user.displayAvatarURL({format: 'png', dynamic: true});

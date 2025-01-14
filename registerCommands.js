@@ -19,20 +19,20 @@ const commands = [
                 ]
             },
             {
-                name: 'simple',
-                type: 5, // STRING
-                description: 'Display Simplefied stats?',
-                required: true,
-                choices: [
-                    { name: 'True', value: 'True' },
-                    { name: 'False', value: 'false' }
-                ]
-            },
-            {
                 name: 'player',
                 type: 3, // STRING
                 description: 'The player name',
                 required: false
+            },
+            {
+                name: 'simple',
+                type: 5, // STRING
+                description: 'Display Simplefied stats?',
+                required: false,
+                choices: [
+                    { name: 'True', value: 'True' },
+                    { name: 'False', value: 'false' }
+                ]
             },
         ]
     },
