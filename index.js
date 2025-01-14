@@ -45,7 +45,6 @@ async function cachePlayerData(playerName) {
     const cacheKey = `playerData-${playerName}`;
     const now = Date.now();
 
-    // Check if the data is in cache and is less than 5 minutes old
     if (cache[cacheKey] && (now - cache[cacheKey].timestamp < 5 * 60 * 1000)) {
         return cache[cacheKey].data;
     }
@@ -80,6 +79,20 @@ async function getPlayerUUID(playerName) {
         return playerData.uuid;
     } else {
         throw new Error(`UUID not found for player ${playerName}`);
+    }
+}
+async function verifyMinecraftUsername(username) {
+    const url = `https://api.mojang.com/users/profiles/minecraft/${username}`;
+    try {
+        const response = await axios.get(url);
+        if (response.status === 200) {
+            return response.data;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error(`Failed to verify Minecraft username: ${username}`, error);
+        return null;
     }
 }
 
@@ -120,6 +133,15 @@ async function getLuckyBlockStats(gameType, playerName) {
         "Mob Deaths": playerData.stats.Bedwars[`${modePrefix}_entity_attack_deaths_bedwars`] || 0,
         "Fall Damage Deaths": playerData.stats.Bedwars[`${modePrefix}_fall_deaths_bedwars`] || 0,
         "Thorn Deaths": playerData.stats.Bedwars[`${modePrefix}_thorns_deaths_bedwars`] || 0,
+        "Suffocation Deaths": playerData.stats.Bedwars[`${modePrefix}_suffocation_deaths_bedwars`] || 0,
+        "Block Explosion Deaths": playerData.stats.Bedwars[`${modePrefix}_block_explosion_deaths_bedwars`] || 0,
+        "Wither Deaths": playerData.stats.Bedwars[`${modePrefix}_wither_deaths_bedwars`] || 0,
+        "lava Deaths": playerData.stats.Bedwars[`${modePrefix}_lava_deaths_bedwars`] || 0,
+        "Crepper Deaths": playerData.stats.Bedwars[`${modePrefix}_entity_explosion_deaths_bedwars`] || 0,
+        "Magic Deaths": playerData.stats.Bedwars[`${modePrefix}_magic_deaths_bedwars`] || 0,
+        "Fire Tick Deaths": playerData.stats.Bedwars[`${modePrefix}_fire_tick_deaths_bedwars`] || 0,
+        "Fire Deaths": playerData.stats.Bedwars[`${modePrefix}_fire_deaths_bedwars`] || 0,
+        "Projectile Deaths": playerData.stats.Bedwars[`${modePrefix}_projectile_deaths_bedwars`] || 0,
         "Final Kills": playerData.stats.Bedwars[`${modePrefix}_final_kills_bedwars`] || 0,
         "Void Final Kills": playerData.stats.Bedwars[`${modePrefix}_void_final_kills_bedwars`] || 0,
         "Mob Final Kills": playerData.stats.Bedwars[`${modePrefix}_entity_attack_final_kills_bedwars`] || 0,
@@ -254,6 +276,9 @@ client.on('interactionCreate', async interaction => {
         }
 
         const uuid = await getPlayerUUID(playerName);
+        
+        // Cache the stats
+        cache[`stats-${playerName}`] = stats;
     
         const statsEmbed = new EmbedBuilder()
             .setColor(`#e4ff00`)
@@ -284,9 +309,17 @@ client.on('interactionCreate', async interaction => {
                     Deaths: ${stats.Deaths}
                     Void Deaths: ${stats["Void Deaths"]}
                     Mob Deaths: ${stats["Mob Deaths"]}
+                    Creeper Deaths: ${stats["Crepper Deaths"]}
                     Fall Damage Deaths: ${stats["Fall Damage Deaths"]}
                     Thorn Deaths: ${stats["Thorn Deaths"]}
                     Magic Deaths: ${stats["Magic Deaths"]}
+                    Wither Deaths: ${stats["Wither Deaths"]}
+                    Suffocation Deaths: ${stats["Suffocation Deaths"]}
+                    Block Explosion Deaths: ${stats["Block Explosion Deaths"]}
+                    Fire Deaths: ${stats["Fire Deaths"]}
+                    Fire Tick Deaths: ${stats["Fire Tick Deaths"]}
+                    Lava Deaths: ${stats["lava Deaths"]}
+                    Projectile Deaths: ${stats["Projectile Deaths"]}
                     Falling Block Deaths: ${stats["Falling Block Deaths"]}
                 `, inline: true},
                 {
@@ -313,13 +346,13 @@ client.on('interactionCreate', async interaction => {
                     Fall Damage Final Deaths: ${stats["Fall Damage Final Deaths"]}
                     Lava Final Deaths: ${stats["Lava Final Deaths"]}
                     Thorn Final Deaths: ${stats["Thorn Final Deaths"]}
-                    Falling Block Final Deaths: ${stats["Falling Block Final Deaths"]}
                     Magic Final Deaths: ${stats["Magic Final Deaths"]}
                     Suffocation Final Deaths: ${stats["Suffocation Final Deaths"]}
                     Wither Final Deaths: ${stats["Wither Final Deaths"]}
                     Fire Tick Final Deaths: ${stats["Fire Tick Final Deaths"]}
                     Block Explosion Final Deaths: ${stats["Block Explosion Final Deaths"]}
                     Projectile Final Deaths: ${stats["Projectile Final Deaths"]}
+                    Falling Block Final Deaths: ${stats["Falling Block Final Deaths"]}
                 `, inline: true}
             )
             .setTimestamp()
@@ -332,9 +365,9 @@ client.on('interactionCreate', async interaction => {
         const verifiedUsername = await verifyMinecraftUsername(minecraftIGN);
 
         if (verifiedUsername) {
-            linkedAccounts[user.id] = verifiedUsername;
+            linkedAccounts[user.id] = minecraftIGN;
             saveLinkedAccounts();
-            await interaction.reply(`Your Hypixel account ${verifiedUsername} has been successfully linked.`);
+            await interaction.reply(`Your Hypixel account ${minecraftIGN} has been successfully linked.`);
         } else {
             await interaction.reply('Could not verify the Minecraft username. Please make sure it is correct.');
         }
@@ -354,10 +387,16 @@ client.on('interactionCreate', async interaction => {
         try {
             const uuid = await getPlayerUUID(playerName);
 
-            const stats = await getLuckyBlockStats(gameType, playerName);
-            if (typeof stats === 'string') {
-                await interaction.reply(stats);
-                return;
+            // Use cached stats if available
+            let stats = cache[`stats-${playerName}`];
+            if (!stats) {
+                stats = await getLuckyBlockStats(gameType, playerName);
+                if (typeof stats === 'string') {
+                    await interaction.reply(stats);
+                    return;
+                }
+                // Cache the stats
+                cache[`stats-${playerName}`] = stats;
             }
 
             const ratios = calculateRatios(stats);

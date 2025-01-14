@@ -17,11 +17,21 @@ const commands = [
                 ]
             },
             {
+                name: 'Simple',
+                type: 3, // STRING
+                description: 'Display Simplefied stats?',
+                required: true,
+                choices: [
+                    { name: 'True', value: 'True' },
+                    { name: 'False', value: 'false' }
+                ]
+            },
+            {
                 name: 'player',
                 type: 3, // STRING
                 description: 'The player name',
                 required: false
-            }
+            },
         ]
     },
     {
@@ -39,28 +49,6 @@ const commands = [
     {
         name: 'ratios',
         description: 'Get Win/Loss, Kill/Death, Final Kill/Final Death ratios for a player',
-        options: [
-            {
-                name: 'gamemode',
-                type: 3, // STRING
-                description: 'The game mode (Duos or Fours)',
-                required: true,
-                choices: [
-                    { name: 'Duos', value: 'Duos' },
-                    { name: 'Fours', value: 'Fours' }
-                ]
-            },
-            {
-                name: 'player',
-                type: 3, // STRING
-                description: 'The player name',
-                required: false
-            }
-        ]
-    },
-    {
-        name: 'simplestats',
-        description: 'Get simplified Lucky Block stats for a player',
         options: [
             {
                 name: 'gamemode',
