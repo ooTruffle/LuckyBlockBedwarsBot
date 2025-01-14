@@ -256,12 +256,13 @@ client.on('interactionCreate', async interaction => {
         return;
     
 
+
     const {commandName, options, user} = interaction;
 
     if (commandName === 'stats') {
         const gameType = options.getString('gamemode');
         let playerName = options.getString('player');
-        const simple = options.getBoolean('simple') || false; 
+        const simple = options.getBoolean('simple') || false;
 
         if (! playerName) {
             if (linkedAccounts[user.id]) {
@@ -322,7 +323,7 @@ client.on('interactionCreate', async interaction => {
                 value: stats["Final Deaths"].toString(),
                 inline: true
             }).setTimestamp().setFooter({
-                text: `${
+                    text: `${
                     interaction.user.tag
                 }`,
                 iconURL: interaction.user.displayAvatarURL(
@@ -349,8 +350,7 @@ client.on('interactionCreate', async interaction => {
             cache[`stats-${playerName}`] = stats;
 
             const statsEmbed = new EmbedBuilder().setColor(`#e4ff00`).setTitle(`Stats in Lucky Block ${gameType} for ${playerName}`).addFields({
-                name: 'Basic Stats',
-                value: `
+                    name: 'Basic Stats', value: `
                         Winstreak: ${
                     stats.Winstreak
                 }
@@ -543,7 +543,7 @@ client.on('interactionCreate', async interaction => {
                     `,
                 inline: true
             }).setTimestamp().setFooter({
-                text: `${
+                    text: `${
                     interaction.user.tag
                 }`,
                 iconURL: interaction.user.displayAvatarURL(
@@ -612,7 +612,7 @@ client.on('interactionCreate', async interaction => {
                 value: ratios.VoidFinalKillRatio.toFixed(2),
                 inline: true
             }).setTimestamp().setFooter({
-                text: `${
+                    text: `${
                     interaction.user.tag
                 }`,
                 iconURL: interaction.user.displayAvatarURL(
@@ -679,7 +679,7 @@ client.on('interactionCreate', async interaction => {
                 value: ratios.VoidFinalKillRatio.toFixed(2),
                 inline: true
             }).setTimestamp().setFooter({
-                text: `${
+                    text: `${
                     interaction.user.tag
                 }`,
                 iconURL: interaction.user.displayAvatarURL(
@@ -702,6 +702,22 @@ client.on('interactionCreate', async interaction => {
 
 
         await interaction.reply({embeds: [info], components: [row]});
+    } else if (commandName === 'ping') {
+        const sent = await interaction.reply({content: 'Pinging...', fetchReply: true});
+        const timeDiff = sent.createdTimestamp - interaction.createdTimestamp;
+        const pingEmbed = new EmbedBuilder().setColor(`#00ff00`).setTitle('Pong! 🏓').setDescription(`Latency: ${timeDiff}ms\nAPI Latency: ${
+            Math.round(client.ws.ping)
+        }ms`).setFooter({
+                text: `${
+                interaction.user.tag
+            }`,
+            iconURL: interaction.user.displayAvatarURL(
+                {dynamic: true}
+            )
+        }).setTimestamp();
+
+
+        await interaction.editReply({embeds: [pingEmbed]});
     }
 });
 

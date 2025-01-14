@@ -73,6 +73,10 @@ const commands = [
     {
         name: 'info',
         description: 'Get information about the bot'
+    },
+    {
+        name: `ping`,
+        description: `Check the bot's latency`
     }
 ];
 
