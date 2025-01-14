@@ -1,6 +1,8 @@
 const { REST, Routes } = require('discord.js');
 require("dotenv").config();
 
+
+
 const commands = [
     {
         name: 'stats',
@@ -17,8 +19,8 @@ const commands = [
                 ]
             },
             {
-                name: 'Simple',
-                type: 3, // STRING
+                name: 'simple',
+                type: 5, // STRING
                 description: 'Display Simplefied stats?',
                 required: true,
                 choices: [
