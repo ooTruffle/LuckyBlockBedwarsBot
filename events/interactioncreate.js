@@ -3,7 +3,8 @@ const {
     Events,
     EmbedBuilder,
     ButtonBuilder,
-    ActionRowBuilder } = require('discord.js');
+    ActionRowBuilder,
+InteractionType } = require('discord.js');
     const { linkedAccounts, saveLinkedAccounts, calculateRatios, getLuckyBlockStats, getSimpleLuckyBlockStats, cache } = require('../functions/lbbedwars');
     const { getPlayerUUID, verifyMinecraftUsername,} = require('../functions/mcdata');
 
@@ -12,9 +13,7 @@ module.exports = {
 	async execute(interaction) {
 		if (!interaction.isCommand()) 
                 return;
-            
-        
-        
+
             const {commandName, options, user} = interaction;
         
             if (commandName === 'stats') {
@@ -454,32 +453,23 @@ module.exports = {
                     await interaction.reply(`Failed to fetch player UUID for ${playerName}.`);
                 }
             } else if (commandName === `info`) {
-                const user = await client.users.fetch(`781305692371157034`);
-                const avatarURL = user.displayAvatarURL({format: 'png', dynamic: true});
-                const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`Lucky Block Bedwars Bot`).setDescription(`This bot was designed and created by ooTruffle to fit the gap of no public bot doing this.`).setThumbnail(avatarURL)
+                const user = await client.users.fetch('781305692371157034');
+                const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true });
+                const info = new EmbedBuilder().setColor('#8000ff').setTitle('Lucky Block Bedwars Bot').setDescription('This bot was designed and created by ooTruffle to fit the gap of no public bot doing this.');
         
                 const githubButton = new ButtonBuilder().setLabel('GitHub Repo').setStyle('Link').setURL('https://github.com/ooTruffle/LuckyBlockBedwarsBot');
-        
                 const row = new ActionRowBuilder().addComponents(githubButton);
         
-        
-                await interaction.reply({embeds: [info], components: [row]});
+                await interaction.reply({ embeds: [info], components: [row] });
             } else if (commandName === 'ping') {
-                const sent = await interaction.reply({content: 'Pinging...', fetchReply: true});
+                const sent = await interaction.reply({ content: 'Pinging...', fetchReply: true });
                 const timeDiff = sent.createdTimestamp - interaction.createdTimestamp;
-                const pingEmbed = new EmbedBuilder().setColor(`#00ff00`).setTitle('Pong! 🏓').setDescription(`Latency: ${timeDiff}ms\nAPI Latency: ${
-                    Math.round(client.ws.ping)
-                }ms`).setFooter({
-                        text: `${
-                        interaction.user.tag
-                    }`,
-                    iconURL: interaction.user.displayAvatarURL(
-                        {dynamic: true}
-                    )
+                const pingEmbed = new EmbedBuilder().setColor('#00ff00').setTitle('Pong! 🏓').setDescription(`Latency: ${timeDiff}ms\nAPI Latency: ${Math.round(client.ws.ping)}ms`).setFooter({
+                    text: `${interaction.user.tag}`,
+                    iconURL: interaction.user.displayAvatarURL({ dynamic: true })
                 }).setTimestamp();
         
-        
-                await interaction.editReply({embeds: [pingEmbed]});
+                await interaction.editReply({ embeds: [pingEmbed] });
             }
         }
     };
