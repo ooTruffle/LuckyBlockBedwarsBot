@@ -60,7 +60,7 @@ async function cachePlayerData(playerName) {
         if (error.response && error.response.data && error.response.data.cause) {
             if (error.response.data.cause === 'Invalid API key') {
                 return { error: 'API key needs to be changed' };
-            } else if (response.data.cause === 'You have already looked up this name recently') {
+            } else if (error.response.data.cause === 'You have already looked up this name recently') {
                 return { error: 'You have already looked up this name recently. Please wait a while before trying again.' };
             }
             return { error: `Failed to fetch data: ${error.response.data.cause}` };
@@ -219,6 +219,7 @@ module.exports = {
     getLuckyBlockStats,
     getPlayerUUID,
     verifyMinecraftUsername,
+    cache,
     
 };
 

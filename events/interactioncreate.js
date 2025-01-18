@@ -4,7 +4,7 @@ const {
     EmbedBuilder,
     ButtonBuilder,
     ActionRowBuilder } = require('discord.js');
-    const { linkedAccounts, saveLinkedAccounts, calculateRatios, getLuckyBlockStats, getSimpleLuckyBlockStats, getPlayerUUID, verifyMinecraftUsername } = require('../functions/lbbedwars');
+    const { linkedAccounts, saveLinkedAccounts, calculateRatios, getLuckyBlockStats, getSimpleLuckyBlockStats, getPlayerUUID, verifyMinecraftUsername, cache } = require('../functions/lbbedwars');
 
 module.exports = {
 	name: Events.InteractionCreate,
