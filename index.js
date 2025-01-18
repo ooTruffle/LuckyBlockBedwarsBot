@@ -11,6 +11,7 @@ const {
 } = require('discord.js');
 const axios = require('axios');
 const fs = require('fs');
+const path = require('node:path');
 require("dotenv").config();
 
 
@@ -49,14 +50,18 @@ async function cachePlayerData(playerName) {
         return cache[cacheKey].data;
     }
 
-    const url = `https://api.hypixel.net/player?key=${
-        process.env.HYPIXEL_API_KEY
-    }&name=${playerName}`;
+    const url = `https://api.hypixel.net/player?key=${process.env.HYPIXEL_API_KEY}&name=${playerName}`;
     try {
         const response = await axios.get(url);
 
-        if (response.data.cause === 'You have already looked up this name recently') {
-            return {error: 'You have already looked up this name recently. Please wait a while before trying again.'};
+        if (response.data.cause) {
+            if (response.data.cause === 'Invalid API key') {
+                return { error: 'API key needs to be changed' };
+            } else if (response.data.cause === 'You have already looked up this name recently') {
+                return { error: 'You have already looked up this name recently. Please wait a while before trying again.' };
+            } else {
+                return { error: `Failed to fetch data: ${response.data.cause}` };
+            }
         }
 
         const playerData = response.data.player;
@@ -69,8 +74,16 @@ async function cachePlayerData(playerName) {
 
         return playerData;
     } catch (error) {
-        console.error(error);
-        return {error: `Failed to fetch data for player ${playerName}, This could be that the name has been looked up recently`};
+        console.error('Error fetching player data:', error.message);
+        if (error.response && error.response.data && error.response.data.cause) {
+            if (error.response.data.cause === 'Invalid API key') {
+                return { error: 'API key needs to be changed' };
+            } else if (response.data.cause === 'You have already looked up this name recently') {
+                return { error: 'You have already looked up this name recently. Please wait a while before trying again.' };
+            }
+            return { error: `Failed to fetch data: ${error.response.data.cause}` };
+        }
+        return { error: `Failed to fetch data for player ${playerName}.` };
     }
 }
 
@@ -217,41 +230,21 @@ function calculateRatios(stats) {
     };
 }
 
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
-client.once('ready', async () => {
-    console.log('Bot is online!');
-    try {
-
-        client.user.setActivity("People Open Blocks", {type: ActivityType.Watching});
-
-
-        const statuses = [
-            {
-                name: "People getting Rouletted",
-                type: ActivityType.Watching
-            }, {
-                name: "People Open Blocks",
-                type: ActivityType.Watching
-            }, {
-                name: "Lucky Block Bedwars",
-                type: ActivityType.Playing
-            },
-
-        ];
+for (const file of eventFiles) {
+	const filePath = path.join(eventsPath, file);
+	const event = require(filePath);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
+	} else {
+		client.on(event.name, (...args) => event.execute(...args));
+	}
+}
 
 
-        let statusIndex = 0;
-        setInterval(() => {
-            statusIndex = (statusIndex + 1) % statuses.length;
-            client.user.setActivity(statuses[statusIndex].name, {type: statuses[statusIndex].type});
-        }, 300000);
-    } catch (error) {
-        console.error("Error during bot initialization:", error);
-    }
-});
-
-
-client.on('interactionCreate', async interaction => {
+/* client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) 
         return;
     
@@ -277,6 +270,10 @@ client.on('interactionCreate', async interaction => {
             const stats = await getSimpleLuckyBlockStats(gameType, playerName);
             if (typeof stats === 'string') {
                 await interaction.reply(stats);
+                return;
+            }
+            if (stats.error) {
+                await interaction.reply(stats.error);
                 return;
             }
 
@@ -719,6 +716,6 @@ client.on('interactionCreate', async interaction => {
 
         await interaction.editReply({embeds: [pingEmbed]});
     }
-});
+}); */
 
 client.login(process.env.DISCORD_BOT_TOKEN);
