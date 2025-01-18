@@ -1,8 +1,10 @@
 const { 
+    client,
     Events,
     EmbedBuilder,
     ButtonBuilder,
     ActionRowBuilder } = require('discord.js');
+    const { linkedAccounts, saveLinkedAccounts, calculateRatios, getLuckyBlockStats, getSimpleLuckyBlockStats, getPlayerUUID, verifyMinecraftUsername } = require('../functions/lbbedwars');
 
 module.exports = {
 	name: Events.InteractionCreate,
