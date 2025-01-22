@@ -1,12 +1,11 @@
 
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, client } = require('discord.js');
 const logchannelid = "1330131850227613777";
 
 module.exports = {
     name: 'guildCreate',
     once: false,
     execute(guild) {
-        // Get the log channel (replace 'logchannelid' with your log channel's ID)
         const logChannel = client.channels.cache.get(logchannelid);
         
         if (!logChannel) {

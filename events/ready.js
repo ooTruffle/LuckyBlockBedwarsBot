@@ -3,7 +3,7 @@ const { Events, ActivityType, } = require('discord.js');
 module.exports = {
 	name: Events.ClientReady,
 	once: true,
-	execute(client) {
+	async execute(client) {
 		console.log(`Ready! Logged in as ${client.user.tag}`);
         try {
 
@@ -30,6 +30,8 @@ module.exports = {
                 statusIndex = (statusIndex + 1) % statuses.length;
                 client.user.setActivity(statuses[statusIndex].name, {type: statuses[statusIndex].type});
             }, 300000);
+            const logChannel = client.channels.cache.get("1330131811690483764");
+            await logChannel.send(`Bot is Online as ${client.user.tag}`);
         } catch (error) {
             console.error("Error during bot initialization:", error);
         }
