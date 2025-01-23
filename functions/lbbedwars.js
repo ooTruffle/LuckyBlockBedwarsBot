@@ -2,7 +2,7 @@ require("dotenv").config();
 const axios = require('axios'); 
 const fs = require('fs'); 
 const path = require('path'); 
-const linkedAccountsFilePath = './linkedAccounts.json';
+const linkedAccountsFilePath = path.join(__dirname, '../linkedAccounts.json');
 
 
 function loadLinkedAccounts() {
