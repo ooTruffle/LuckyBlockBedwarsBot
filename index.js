@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('node:path');
 require("dotenv").config();
 const { linkedAccounts, saveLinkedAccounts, calculateRatios, getLuckyBlockStats, getSimpleLuckyBlockStats, cache } = require('./functions/lbbedwars');
-const { getPlayerUUID, verifyMinecraftUsername,} = require('./functions/mcdata');
+const { getPlayerUUID, verifyMinecraftUsername, getPlayerSocials} = require('./functions/mcdata');
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
@@ -66,6 +66,10 @@ client.on('interactionCreate', async interaction => {
             }
 
             const uuid = await getPlayerUUID(playerName);
+// Debug the UUID and the URL
+console.log(`UUID: ${uuid}`);
+const thumbnailUrl = `https://minotar.net/helm/${uuid}.png`;
+console.log(`Thumbnail URL: ${thumbnailUrl}`);
 
             const simpleStatsEmbed = new EmbedBuilder().setColor(`#e4ff00`).setTitle(`Simple stats for ${playerName} in Lucky Block ${gameType}`).addFields({
                 name: 'Winstreak',
@@ -108,9 +112,7 @@ client.on('interactionCreate', async interaction => {
                 value: stats["Final Deaths"].toString(),
                 inline: true
             }).setTimestamp().setFooter({
-                    text: `${
-                    interaction.user.tag
-                }`,
+                    text: `${interaction.user.tag} | Stats are updated every 5 minutes`,
                 iconURL: interaction.user.displayAvatarURL(
                     {dynamic: true}
                 )
@@ -130,6 +132,11 @@ client.on('interactionCreate', async interaction => {
             }
 
             const uuid = await getPlayerUUID(playerName);
+            // Debug the UUID and the URL
+            console.log(`UUID: ${uuid}`);
+            const thumbnailUrl = `https://minotar.net/helm/${uuid}.png`;
+            console.log(`Thumbnail URL: ${thumbnailUrl}`);
+
 
             // Cache the stats
             cache[`stats-${playerName}`] = stats;
@@ -328,9 +335,7 @@ client.on('interactionCreate', async interaction => {
                     `,
                 inline: true
             }).setTimestamp().setFooter({
-                    text: `${
-                    interaction.user.tag
-                }`,
+                    text: `${interaction.user.tag} | Stats are updated every 5 minutes`,
                 iconURL: interaction.user.displayAvatarURL(
                     {dynamic: true}
                 )
@@ -341,11 +346,24 @@ client.on('interactionCreate', async interaction => {
     } else if (commandName === 'link') {
         const minecraftIGN = options.getString('minecraft_ign');
         const verifiedUsername = await verifyMinecraftUsername(minecraftIGN);
-
+    
         if (verifiedUsername) {
-            linkedAccounts[user.id] = minecraftIGN;
-            saveLinkedAccounts();
-            await interaction.reply(`Your Hypixel account ${minecraftIGN} has been successfully linked.`);
+            try {
+                const uuid = await getPlayerUUID(minecraftIGN); // UUID string
+                const socialMedia = await getPlayerSocials(minecraftIGN); // Social media object
+                const discordTag = interaction.user.tag.toLowerCase(); // Convert user's Discord tag to lowercase
+    
+                if (socialMedia && socialMedia.links && socialMedia.links.DISCORD.toLowerCase() === discordTag) {
+                    linkedAccounts[user.id] = minecraftIGN;
+                    saveLinkedAccounts();
+                    await interaction.reply(`Your Hypixel account ${minecraftIGN} has been successfully linked.`);
+                } else {
+                    await interaction.reply('Your Discord tag does not match the one linked to the Minecraft account. Please link your Discord account on Hypixel.');
+                }
+            } catch (error) {
+                console.error('Error during verification:', error);
+                await interaction.reply('Could not verify the Minecraft username. Please make sure it is correct.');
+            }
         } else {
             await interaction.reply('Could not verify the Minecraft username. Please make sure it is correct.');
         }
@@ -397,9 +415,7 @@ client.on('interactionCreate', async interaction => {
                 value: ratios.VoidFinalKillRatio.toFixed(2),
                 inline: true
             }).setTimestamp().setFooter({
-                    text: `${
-                    interaction.user.tag
-                }`,
+                    text: `${interaction.user.tag} | Stats are updated every 5 minutes`,
                 iconURL: interaction.user.displayAvatarURL(
                     {dynamic: true}
                 )
@@ -464,9 +480,7 @@ client.on('interactionCreate', async interaction => {
                 value: ratios.VoidFinalKillRatio.toFixed(2),
                 inline: true
             }).setTimestamp().setFooter({
-                    text: `${
-                    interaction.user.tag
-                }`,
+                    text: `${interaction.user.tag} | Stats are updated every 5 minutes`,
                 iconURL: interaction.user.displayAvatarURL(
                     {dynamic: true}
                 )

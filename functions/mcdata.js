@@ -5,7 +5,16 @@ const { cachePlayerData } = require('../functions/lbbedwars');
 async function getPlayerUUID(playerName) {
     const playerData = await cachePlayerData(playerName);
     if (playerData && playerData.uuid) {
-        return playerData.uuid;
+        return playerData.uuid; // Return only the UUID string
+    } else {
+        throw new Error(`UUID not found for player ${playerName}`);
+    }
+}
+
+async function getPlayerSocials(playerName) {
+    const playerData = await cachePlayerData(playerName);
+    if (playerData && playerData.uuid) {
+        return playerData.socialMedia;
     } else {
         throw new Error(`UUID not found for player ${playerName}`);
     }
@@ -26,5 +35,6 @@ async function verifyMinecraftUsername(username) {
 }
 module.exports = {
     getPlayerUUID,
-    verifyMinecraftUsername
+    verifyMinecraftUsername,
+    getPlayerSocials
 };
