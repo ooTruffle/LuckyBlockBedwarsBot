@@ -1,18 +1,10 @@
-
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, client } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const logchannelid = "1330131850227613777";
 
-module.exports = {
-    name: 'guildCreate',
-    once: false,
-    execute(guild) {
+module.exports = (client) => {
+    client.on('guildCreate', guild => {
         const logChannel = client.channels.cache.get(logchannelid);
-        
-        if (!logChannel) {
-            console.error(`Log channel with ID ${logchannelid} not found.`);
-            return;
-        }
-
+    
         // Create a button with the guild ID as the custom ID
         const leaveButton = new ButtonBuilder()
             .setCustomId(`leave_${guild.id}`)  // 'leave_' prefix is added to distinguish this ID
@@ -33,6 +25,6 @@ module.exports = {
     
         // Send the embed and the button to the log channel
         console.log(`Joined ${guild.name} (${guild.id})!`);
-        logChannel.send({ embeds: [embed]/*, components: [row]*/ });
-    }
+        logChannel.send({ embeds: [embed], components: [row] });
+    });
 };

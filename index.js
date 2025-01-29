@@ -11,7 +11,8 @@ const path = require('node:path');
 require("dotenv").config();
 const { linkedAccounts, saveLinkedAccounts, calculateRatios, getLuckyBlockStats, getSimpleLuckyBlockStats, cache } = require('./functions/lbbedwars');
 const { getPlayerUUID, verifyMinecraftUsername, getPlayerSocials} = require('./functions/mcdata');
-
+const guildCreateHandler = require("./otherevents/guildcreate.js");
+const guildDeleteHandler = require("./otherevents/guilddelete,js");
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
@@ -27,13 +28,27 @@ for (const file of eventFiles) {
 		client.on(event.name, (...args) => event.execute(...args));
 	}
 }
-
+guildCreateHandler(client);
+guildDeleteHandler(client);
 client.on('interactionCreate', async interaction => {
+    if (interaction.isButton()) {
+        if (interaction.customId.startsWith("leave_")) {
+          const guildId = interaction.customId.split("_")[1];
+          const guild = client.guilds.cache.get(guildId);
+          await interaction.deferReply({ ephemeral: true });
+          if (guild) {
+            guild
+              .leave()
+              .then((g) => {
+                logger.info(`Left the server: ${g}`);
+                interaction.editReply("Successfully left the server");
+              })
+              .catch(console.error);
+          }
+        }
+      }
     if (!interaction.isCommand()) 
         return;
-    
-
-
     const {commandName, options, user} = interaction;
 
     if (commandName === 'stats') {
@@ -332,8 +347,7 @@ client.on('interactionCreate', async interaction => {
     } else if (commandName === `info`) {
         const user = await client.users.fetch(`781305692371157034`);
         const avatarURL = user.displayAvatarURL({format: 'png', dynamic: true});
-        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`Lucky Block Bedwars Bot`).setDescription(`This bot was designed and created by ooTruffle to fit the gap of no public bot doing this.`).setThumbnail(avatarURL)
-
+        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`Lucky Block Bedwars Bot`).setDescription(`This bot was designed and created by ooTruffle to fit the gap of no public bot doing this.`).setThumbnail(avatarURL).setTimestamp().setFooter({text: `${interaction.user.tag}`,iconURL: interaction.user.displayAvatarURL({dynamic: true})});
         const githubButton = new ButtonBuilder().setLabel('GitHub Repo').setStyle('Link').setURL('https://github.com/ooTruffle/LuckyBlockBedwarsBot');
         const shamelessplug = new ButtonBuilder().setLabel('Shameless Plug').setStyle('Link').setURL('https://socials.fluffykiwi.net/');
 
@@ -353,10 +367,15 @@ client.on('interactionCreate', async interaction => {
             iconURL: interaction.user.displayAvatarURL(
                 {dynamic: true}
             )
-        }).setTimestamp();
+        }).setTimestamp().setFooter({text: `${interaction.user.tag}`,iconURL: interaction.user.displayAvatarURL({dynamic: true})});
 
 
         await interaction.editReply({embeds: [pingEmbed]});
+    } else if (commandName == 'invite'){
+        const user = await client.users.fetch(`1326253123102179418`);
+        const avatarURL = user.displayAvatarURL({format: 'png', dynamic: true});
+        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`How to invite the bot`).setDescription(`This is a private bot that cant be invited at this time`).setThumbnail(avatarURL).setTimestamp().setFooter({text: `${interaction.user.tag}`,iconURL: interaction.user.displayAvatarURL({dynamic: true})});
+        await interaction.reply({embeds: [info]});
     }
 });
 

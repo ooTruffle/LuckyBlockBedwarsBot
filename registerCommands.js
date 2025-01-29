@@ -77,6 +77,10 @@ const commands = [
     {
         name: `ping`,
         description: `Check the bot's latency`
+    },
+    {
+        name: `invite`,
+        description: `How to invite the bot`
     }
 ];
 
