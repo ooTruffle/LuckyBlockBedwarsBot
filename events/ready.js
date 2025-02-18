@@ -20,6 +20,9 @@ module.exports = {
                 }, {
                     name: "Lucky Block Bedwars",
                     type: ActivityType.Playing
+                },{
+                    name: "Now with a Hypixel API Key",
+                    type: ActivityType.Playing
                 },
     
             ];

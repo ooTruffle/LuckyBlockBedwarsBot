@@ -149,10 +149,7 @@ client.on('interactionCreate', async interaction => {
             console.log(`UUID: ${uuid}`);
             const thumbnailUrl = `https://minotar.net/helm/${uuid}.png`;
             console.log(`Thumbnail URL: ${thumbnailUrl}`);
-    
-            // Cache the stats
             cache[`stats-${playerName}`] = stats;
-    
             const statsEmbed = new EmbedBuilder().setColor(`#e4ff00`).setTitle(`Stats in Lucky Block ${gameType} for ${playerName}`).addFields({
                 name: 'Basic Stats', value: `
                     Winstreak: ${stats.Winstreak}
