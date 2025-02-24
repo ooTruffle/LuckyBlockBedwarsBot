@@ -10,54 +10,70 @@ const fs = require('fs');
 const path = require('node:path');
 require("dotenv").config();
 const { linkedAccounts, saveLinkedAccounts, calculateRatios, getLuckyBlockStats, getSimpleLuckyBlockStats, cache } = require('./functions/lbbedwars');
-const { getPlayerUUID, verifyMinecraftUsername, getPlayerSocials} = require('./functions/mcdata');
+const { getPlayerUUID, verifyMinecraftUsername, getPlayerSocials } = require('./functions/mcdata');
 const guildCreateHandler = require("./otherevents/guildcreate.js");
-const guildDeleteHandler = require("./otherevents/guilddelete,js");
+const guildDeleteHandler = require("./otherevents/guilddelete.js");
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds]
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildBans]
 });
 
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+
+const specifiedServerId = '1330128389348261938';
+
 for (const file of eventFiles) {
-	const filePath = path.join(eventsPath, file);
-	const event = require(filePath);
-	if (event.once) {
-		client.once(event.name, (...args) => event.execute(...args));
-	} else {
-		client.on(event.name, (...args) => event.execute(...args));
-	}
+    const filePath = path.join(eventsPath, file);
+    const event = require(filePath);
+    if (event.once) {
+        client.once(event.name, (...args) => event.execute(...args));
+    } else {
+        client.on(event.name, (...args) => event.execute(...args));
+    }
 }
 guildCreateHandler(client);
 guildDeleteHandler(client);
+
 client.on('interactionCreate', async interaction => {
+    const specifiedServer = client.guilds.cache.get(specifiedServerId);
+    if (!specifiedServer) {
+        console.error(`Server with ID ${specifiedServerId} not found.`);
+        return;
+    }
+    const banList = await specifiedServer.bans.fetch();
+    console.log(banList);
+    if (banList.has(interaction.user.id)) {
+        await interaction.reply({ content: 'You have been banned from using this bot.', ephemeral: true });
+        return;
+    }
     if (interaction.isButton()) {
         if (interaction.customId.startsWith("leave_")) {
-          const guildId = interaction.customId.split("_")[1];
-          const guild = client.guilds.cache.get(guildId);
-          await interaction.deferReply({ ephemeral: true });
-          if (guild) {
-            guild
-              .leave()
-              .then((g) => {
-                logger.info(`Left the server: ${g}`);
-                interaction.editReply("Successfully left the server");
-              })
-              .catch(console.error);
-          }
+            const guildId = interaction.customId.split("_")[1];
+            const guild = client.guilds.cache.get(guildId);
+            await interaction.deferReply({ ephemeral: true });
+            if (guild) {
+                guild
+                    .leave()
+                    .then((g) => {
+                        console.info(`Left the server: ${g}`);
+                        interaction.editReply("Successfully left the server");
+                    })
+                    .catch(console.error);
+            }
         }
-      }
-    if (!interaction.isCommand()) 
+    }
+
+    if (!interaction.isCommand())
         return;
-    const {commandName, options, user} = interaction;
+    const { commandName, options, user } = interaction;
 
     if (commandName === 'stats') {
         const gameType = options.getString('gamemode');
         let playerName = options.getString('player');
         const simple = options.getBoolean('simple') || false;
-    
+
         let showLinkMessage = false;
-    
+
         if (!playerName) {
             if (linkedAccounts[user.id]) {
                 playerName = linkedAccounts[user.id];
@@ -68,7 +84,7 @@ client.on('interactionCreate', async interaction => {
         } else if (!linkedAccounts[user.id]) {
             showLinkMessage = true;
         }
-    
+
         if (simple) {
             const stats = await getSimpleLuckyBlockStats(gameType, playerName);
             if (typeof stats === 'string') {
@@ -79,12 +95,12 @@ client.on('interactionCreate', async interaction => {
                 await interaction.reply(stats.error);
                 return;
             }
-    
+
             const uuid = await getPlayerUUID(playerName);
             console.log(`UUID: ${uuid}`);
             const thumbnailUrl = `https://minotar.net/helm/${uuid}.png`;
             console.log(`Thumbnail URL: ${thumbnailUrl}`);
-    
+
             const simpleStatsEmbed = new EmbedBuilder().setColor(`#e4ff00`).setTitle(`Simple stats for ${playerName} in Lucky Block ${gameType}`).addFields({
                 name: 'Winstreak',
                 value: stats.Winstreak.toString(),
@@ -128,23 +144,23 @@ client.on('interactionCreate', async interaction => {
             }).setTimestamp().setFooter({
                 text: `${interaction.user.tag} | Stats are updated every 5 minutes`,
                 iconURL: interaction.user.displayAvatarURL(
-                    {dynamic: true}
+                    { dynamic: true }
                 )
             }).setThumbnail(`https://minotar.net/helm/${uuid}.png`);
-    
-            await interaction.reply({embeds: [simpleStatsEmbed]});
+
+            await interaction.reply({ embeds: [simpleStatsEmbed] });
         } else {
             const stats = await getLuckyBlockStats(gameType, playerName);
             if (typeof stats === 'string') {
                 await interaction.reply(stats);
                 return;
             }
-    
+
             if (stats.error) {
                 await interaction.reply(stats.error);
                 return;
             }
-    
+
             const uuid = await getPlayerUUID(playerName);
             console.log(`UUID: ${uuid}`);
             const thumbnailUrl = `https://minotar.net/helm/${uuid}.png`;
@@ -236,13 +252,13 @@ client.on('interactionCreate', async interaction => {
             }).setTimestamp().setFooter({
                 text: `${interaction.user.tag} | Stats are updated every 5 minutes`,
                 iconURL: interaction.user.displayAvatarURL(
-                    {dynamic: true}
+                    { dynamic: true }
                 )
             }).setThumbnail(`https://minotar.net/helm/${uuid}.png`);
-    
-            await interaction.reply({embeds: [statsEmbed]});
+
+            await interaction.reply({ embeds: [statsEmbed] });
         }
-    
+
         if (showLinkMessage) {
             await interaction.followUp({
                 content: 'Did you know you can use </link:1326295407739015242> to not need to specify your player name',
@@ -252,12 +268,12 @@ client.on('interactionCreate', async interaction => {
     } else if (commandName === 'link') {
         const minecraftIGN = options.getString('minecraft_ign');
         const verifiedUsername = await verifyMinecraftUsername(minecraftIGN);
-    
+
         if (verifiedUsername) {
             try {
-                const socialMedia = await getPlayerSocials(minecraftIGN); 
-                const discordTag = interaction.user.tag.toLowerCase(); 
-    
+                const socialMedia = await getPlayerSocials(minecraftIGN);
+                const discordTag = interaction.user.tag.toLowerCase();
+
                 if (socialMedia && socialMedia.links && socialMedia.links.DISCORD.toLowerCase() === discordTag) {
                     linkedAccounts[user.id] = minecraftIGN;
                     saveLinkedAccounts();
@@ -276,7 +292,7 @@ client.on('interactionCreate', async interaction => {
         const gameType = options.getString('gamemode');
         let playerName = options.getString('player');
 
-        if (! playerName) {
+        if (!playerName) {
             if (linkedAccounts[user.id]) {
                 playerName = linkedAccounts[user.id];
             } else {
@@ -289,7 +305,7 @@ client.on('interactionCreate', async interaction => {
             const uuid = await getPlayerUUID(playerName);
 
             let stats = cache[`stats-${playerName}`];
-            if (! stats) {
+            if (!stats) {
                 stats = await getLuckyBlockStats(gameType, playerName);
                 if (typeof stats === 'string') {
                     await interaction.reply(stats);
@@ -320,62 +336,51 @@ client.on('interactionCreate', async interaction => {
                 value: ratios.VoidFinalKillRatio.toFixed(2),
                 inline: true
             }).setTimestamp().setFooter({
-                    text: `${interaction.user.tag} | Stats are updated every 5 minutes`,
+                text: `${interaction.user.tag} | Stats are updated every 5 minutes`,
                 iconURL: interaction.user.displayAvatarURL(
-                    {dynamic: true}
+                    { dynamic: true }
                 )
             }).setThumbnail(`https://minotar.net/helm/${uuid}.png`);
 
-            await interaction.reply({embeds: [ratioEmbed]});
+            await interaction.reply({ embeds: [ratioEmbed] });
         } catch (error) {
             await interaction.reply(`Failed to fetch player UUID for ${playerName}.`);
         }
-    } else if (commandName === 'link') {
-        const minecraftIGN = options.getString('minecraft_ign');
-        const verifiedUsername = await verifyMinecraftUsername(minecraftIGN);
-
-        if (verifiedUsername) {
-            linkedAccounts[user.id] = verifiedUsername;
-            saveLinkedAccounts();
-            await interaction.reply(`Your Hypixel account ${verifiedUsername} has been successfully linked.`);
-        } else {
-            await interaction.reply('Could not verify the Minecraft username. Please make sure it is correct.');
-        }
     } else if (commandName === `info`) {
         const user = await client.users.fetch(`781305692371157034`);
-        const avatarURL = user.displayAvatarURL({format: 'png', dynamic: true});
-        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`Lucky Block Bedwars Bot`).setDescription(`This bot was designed and created by ooTruffle to fit the gap of no public bot doing this.`).setThumbnail(avatarURL).setTimestamp().setFooter({text: `${interaction.user.tag}`,iconURL: interaction.user.displayAvatarURL({dynamic: true})});
+        const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true });
+        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`Lucky Block Bedwars Bot`).setDescription(`This bot was designed and created by ooTruffle to fit the gap of no public bot doing thi[...]`).setThumbnail(avatarURL).setTimestamp().setFooter({
+            text: `${interaction.user.tag}`,
+            iconURL: interaction.user.displayAvatarURL(
+                { dynamic: true }
+            )
+        });
+
         const githubButton = new ButtonBuilder().setLabel('GitHub Repo').setStyle('Link').setURL('https://github.com/ooTruffle/LuckyBlockBedwarsBot');
         const shamelessplug = new ButtonBuilder().setLabel('Shameless Plug').setStyle('Link').setURL('https://socials.fluffykiwi.net/');
 
         const row = new ActionRowBuilder().addComponents(githubButton, shamelessplug);
 
-
-        await interaction.reply({embeds: [info], components: [row]});
+        await interaction.reply({ embeds: [info], components: [row] });
     } else if (commandName === 'ping') {
-        const sent = await interaction.reply({content: 'Pinging...', fetchReply: true});
+        const sent = await interaction.reply({ content: 'Pinging...', fetchReply: true });
         const timeDiff = sent.createdTimestamp - interaction.createdTimestamp;
         const pingEmbed = new EmbedBuilder().setColor(`#00ff00`).setTitle('Pong! 🏓').setDescription(`Latency: ${timeDiff}ms\nAPI Latency: ${
             Math.round(client.ws.ping)
         }ms`).setFooter({
-                text: `${
-                interaction.user.tag
-            }`,
+            text: `${interaction.user.tag}`,
             iconURL: interaction.user.displayAvatarURL(
-                {dynamic: true}
+                { dynamic: true }
             )
-        }).setTimestamp().setFooter({text: `${interaction.user.tag}`,iconURL: interaction.user.displayAvatarURL({dynamic: true})});
+        }).setTimestamp();
 
-
-        await interaction.editReply({embeds: [pingEmbed]});
-    } else if (commandName == 'invite'){
+        await interaction.editReply({ embeds: [pingEmbed] });
+    } else if (commandName == 'invite') {
         const user = await client.users.fetch(`1326253123102179418`);
-        const avatarURL = user.displayAvatarURL({format: 'png', dynamic: true});
-        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`How to invite the bot`).setDescription(`This is a private bot that cant be invited at this time`).setThumbnail(avatarURL).setTimestamp().setFooter({text: `${interaction.user.tag}`,iconURL: interaction.user.displayAvatarURL({dynamic: true})});
-        await interaction.reply({embeds: [info]});
+        const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true });
+        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`How to invite the bot`).setDescription(`This is a private bot that can't be invited at this time`).setThumbnail(avatarURL).setTimestamp();
+        await interaction.reply({ embeds: [info] });
     }
 });
-
-
 
 client.login(process.env.DISCORD_BOT_TOKEN);
