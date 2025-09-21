@@ -5,81 +5,97 @@ const path = require('path');
 // Register custom fonts if needed
 // registerFont('path/to/custom-font.ttf', { family: 'CustomFont' });
 
+// Utility function to draw rounded rectangles
+function fillRoundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+}
+
 async function generateLocalStatsImage(playerName, stats, uuid) {
-    const width = 1000;
-    const height = 800;
+    const width = 900;
+    const height = 600;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
     // Background color
-    ctx.fillStyle = '#1e1e1e';
+    ctx.fillStyle = '#2e2e2e';
     ctx.fillRect(0, 0, width, height);
 
     // Title
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 36px Arial';
-    ctx.fillText(`Stats for ${playerName}`, 50, 50);
+    ctx.fillText(`Bedwars Stats for ${playerName}`, 50, 40);
 
     // Colors and styles for stat boxes
     const colors = ['#ff595e', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93'];
-    const boxWidth = 400;
-    const boxHeight = 80;
-    const padding = 20;
+    const boxWidth = 250;
+    const boxHeight = 70;
+    const padding = 15;
     const borderRadius = 10;
     const shadowOffset = 5;
     const startX = 50;
     const startY = 100;
 
-    ctx.font = '24px Arial';
+    ctx.font = 'bold 20px Arial';
     ctx.textBaseline = 'middle';
 
     // Stats Array
     const statsArray = [
-        `Winstreak: ${stats.Winstreak}`,
-        `Games Played: ${stats["Games Played"]}`,
-        `Wins: ${stats.Wins}`,
-        `Loss: ${stats.Loss}`,
-        `Beds Broken: ${stats["Beds Broken"]}`,
-        `Beds Lost: ${stats["Beds Lost"]}`,
-        `Kills: ${stats.Kills}`,
-        `Deaths: ${stats.Deaths}`,
-        `Final Kills: ${stats["Final Kills"]}`,
-        `Final Deaths: ${stats["Final Deaths"]}`
+        { name: "Winstreak", value: stats.Winstreak },
+        { name: "Games Played", value: stats["Games Played"] },
+        { name: "Wins", value: stats.Wins },
+        { name: "Losses", value: stats.Loss },
+        { name: "W/L Ratio", value: (stats.Wins / stats.Loss).toFixed(2) },
+        { name: "Final Kills", value: stats["Final Kills"] },
+        { name: "Final Deaths", value: stats["Final Deaths"] },
+        { name: "FKDR", value: (stats["Final Kills"] / stats["Final Deaths"]).toFixed(2) }
+    ];
+
+    // Layout positions for 3 columns
+    const layoutPositions = [
+        { x: startX, y: startY },
+        { x: startX + boxWidth + padding, y: startY },
+        { x: startX + 2 * (boxWidth + padding), y: startY },
+        { x: startX, y: startY + boxHeight + padding },
+        { x: startX + boxWidth + padding, y: startY + boxHeight + padding },
+        { x: startX + 2 * (boxWidth + padding), y: startY + boxHeight + padding },
+        { x: startX, y: startY + 2 * (boxHeight + padding) },
+        { x: startX + boxWidth + padding, y: startY + 2 * (boxHeight + padding) },
+        { x: startX + 2 * (boxWidth + padding), y: startY + 2 * (boxHeight + padding) }
     ];
 
     // Draw stats in colored boxes with rounded corners and shadows
-    statsArray.forEach((text, index) => {
-        const x = startX + (index % 2) * (boxWidth + padding);
-        const y = startY + Math.floor(index / 2) * (boxHeight + padding);
+    statsArray.forEach((stat, index) => {
+        const pos = layoutPositions[index];
 
         // Shadow
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(x + shadowOffset, y + shadowOffset, boxWidth, boxHeight);
+        ctx.fillRect(pos.x + shadowOffset, pos.y + shadowOffset, boxWidth, boxHeight);
 
         // Box
         ctx.fillStyle = colors[index % colors.length];
-        ctx.beginPath();
-        ctx.moveTo(x + borderRadius, y);
-        ctx.lineTo(x + boxWidth - borderRadius, y);
-        ctx.quadraticCurveTo(x + boxWidth, y, x + boxWidth, y + borderRadius);
-        ctx.lineTo(x + boxWidth, y + boxHeight - borderRadius);
-        ctx.quadraticCurveTo(x + boxWidth, y + boxHeight, x + boxWidth - borderRadius, y + boxHeight);
-        ctx.lineTo(x + borderRadius, y + boxHeight);
-        ctx.quadraticCurveTo(x, y + boxHeight, x, y + boxHeight - borderRadius);
-        ctx.lineTo(x, y + borderRadius);
-        ctx.quadraticCurveTo(x, y, x + borderRadius, y);
-        ctx.closePath();
-        ctx.fill();
+        fillRoundRect(ctx, pos.x, pos.y, boxWidth, boxHeight, borderRadius);
 
         // Text
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(text, x + 20, y + boxHeight / 2);
+        ctx.fillText(stat.name + ":", pos.x + 20, pos.y + boxHeight / 3);
+        ctx.fillText(stat.value, pos.x + 20, pos.y + 2 * boxHeight / 3);
     });
 
     // Add a full Minecraft skin preview
     const skinUrl = `https://crafatar.com/renders/body/${uuid}?scale=10&default=MHF_Steve&overlay`;
     const skinImage = await loadImage(skinUrl);
-    ctx.drawImage(skinImage, 800, 150, 150, 300);
+    ctx.drawImage(skinImage, 700, 100, 150, 300);
 
     // Convert the canvas to a buffer
     const buffer = canvas.toBuffer('image/png');

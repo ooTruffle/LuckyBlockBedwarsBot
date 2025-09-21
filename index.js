@@ -41,7 +41,6 @@ client.on('interactionCreate', async interaction => {
         return;
     }
     const banList = await specifiedServer.bans.fetch();
-    console.log(banList);
     if (banList.has(interaction.user.id)) {
         await interaction.reply({ content: 'You have been banned from using this bot.', ephemeral: true });
         return;
@@ -349,7 +348,7 @@ client.on('interactionCreate', async interaction => {
     } else if (commandName === `info`) {
         const user = await client.users.fetch(`781305692371157034`);
         const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true });
-        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`Lucky Block Bedwars Bot`).setDescription(`This bot was designed and created by ooTruffle to fit the gap of no public bot doing thi[...]`).setThumbnail(avatarURL).setTimestamp().setFooter({
+        const info = new EmbedBuilder().setColor(`#8000ff`).setTitle(`Lucky Block Bedwars Bot`).setDescription(`This bot was designed and created by ooTruffle to fit the gap of no public bot doing this`).setThumbnail(avatarURL).setTimestamp().setFooter({
             text: `${interaction.user.tag}`,
             iconURL: interaction.user.displayAvatarURL(
                 { dynamic: true }
