@@ -20,7 +20,28 @@ const client = new Client({
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
-const specifiedServerId = '1330128389348261938';
+const specifiedServerId = process.env.SPECIFIED_SERVER_ID || '1330128389348261938';
+
+// Cache for ban list to avoid fetching on every interaction
+let banListCache = {
+    bans: new Set(),
+    lastUpdate: 0,
+    updateInterval: 5 * 60 * 1000 // 5 minutes
+};
+
+async function updateBanListCache(guild) {
+    const now = Date.now();
+    if (now - banListCache.lastUpdate < banListCache.updateInterval) {
+        return; // Cache is still valid
+    }
+    try {
+        const bans = await guild.bans.fetch();
+        banListCache.bans = new Set(bans.map(ban => ban.user.id));
+        banListCache.lastUpdate = now;
+    } catch (error) {
+        console.error('Error updating ban list cache:', error);
+    }
+}
 
 for (const file of eventFiles) {
     const filePath = path.join(eventsPath, file);
@@ -40,8 +61,8 @@ client.on('interactionCreate', async interaction => {
         console.error(`Server with ID ${specifiedServerId} not found.`);
         return;
     }
-    const banList = await specifiedServer.bans.fetch();
-    if (banList.has(interaction.user.id)) {
+    await updateBanListCache(specifiedServer);
+    if (banListCache.bans.has(interaction.user.id)) {
         await interaction.reply({ content: 'You have been banned from using this bot.', ephemeral: true });
         return;
     }
@@ -49,15 +70,22 @@ client.on('interactionCreate', async interaction => {
         if (interaction.customId.startsWith("leave_")) {
             const guildId = interaction.customId.split("_")[1];
             const guild = client.guilds.cache.get(guildId);
-            await interaction.deferReply({ ephemeral: true });
-            if (guild) {
-                guild
-                    .leave()
-                    .then((g) => {
-                        console.info(`Left the server: ${g}`);
-                        interaction.editReply("Successfully left the server");
-                    })
-                    .catch(console.error);
+            try {
+                await interaction.deferReply({ ephemeral: true });
+                if (guild) {
+                    await guild.leave();
+                    console.info(`Left the server: ${guild.name} (${guild.id})`);
+                    await interaction.editReply("Successfully left the server");
+                } else {
+                    await interaction.editReply("Server not found.");
+                }
+            } catch (error) {
+                console.error('Error leaving server:', error);
+                if (interaction.deferred || interaction.replied) {
+                    await interaction.editReply("Failed to leave the server.");
+                } else {
+                    await interaction.reply({ content: "Failed to leave the server.", ephemeral: true });
+                }
             }
         }
     }
@@ -66,25 +94,40 @@ client.on('interactionCreate', async interaction => {
         return;
     const { commandName, options, user } = interaction;
 
+    // Helper function to validate Minecraft username
+    function validatePlayerName(name) {
+        if (!name) return false;
+        // Minecraft usernames: 3-16 characters, alphanumeric and underscores only
+        return /^[a-zA-Z0-9_]{3,16}$/.test(name);
+    }
+
     if (commandName === 'stats') {
-        const gameType = options.getString('gamemode');
-        let playerName = options.getString('player');
-        const simple = options.getBoolean('simple') || false;
+        try {
+            const gameType = options.getString('gamemode');
+            let playerName = options.getString('player');
+            const simpleOption = options.getString('simple');
+            const simple = simpleOption === 'true' || options.getBoolean('simple') || false;
 
-        let showLinkMessage = false;
+            let showLinkMessage = false;
 
-        if (!playerName) {
-            if (linkedAccounts[user.id]) {
-                playerName = linkedAccounts[user.id];
-            } else {
-                await interaction.reply('No player specified and no linked account found.\nDid you know you can use /link to not need to specify your player name');
+            if (!playerName) {
+                if (linkedAccounts[user.id]) {
+                    playerName = linkedAccounts[user.id];
+                } else {
+                    await interaction.reply('No player specified and no linked account found.\nDid you know you can use /link to not need to specify your player name');
+                    return;
+                }
+            } else if (!linkedAccounts[user.id]) {
+                showLinkMessage = true;
+            }
+
+            // Validate player name
+            if (!validatePlayerName(playerName)) {
+                await interaction.reply('Invalid player name. Minecraft usernames must be 3-16 characters and contain only letters, numbers, and underscores.');
                 return;
             }
-        } else if (!linkedAccounts[user.id]) {
-            showLinkMessage = true;
-        }
 
-        if (simple) {
+            if (simple) {
             const stats = await getSimpleLuckyBlockStats(gameType, playerName);
             if (typeof stats === 'string') {
                 await interaction.reply(stats);
@@ -251,51 +294,77 @@ client.on('interactionCreate', async interaction => {
             }).setThumbnail(`https://vzge.me/bust/256/${uuid}.png?y=-40`);
 
             await interaction.reply({ embeds: [statsEmbed] });
-        }
+            }
 
-        if (showLinkMessage) {
-            await interaction.followUp({
-                content: 'Did you know you can use </link:1326295407739015242> to not need to specify your player name',
-                ephemeral: true
-            });
+            if (showLinkMessage) {
+                await interaction.followUp({
+                    content: 'Did you know you can use </link:1326295407739015242> to not need to specify your player name',
+                    ephemeral: true
+                });
+            }
+        } catch (error) {
+            console.error('Error in stats command:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: 'An error occurred while fetching stats. Please try again later.', ephemeral: true });
+            } else {
+                await interaction.followUp({ content: 'An error occurred while fetching stats. Please try again later.', ephemeral: true });
+            }
         }
     } else if (commandName === 'link') {
-        const minecraftIGN = options.getString('minecraft_ign');
-        const verifiedUsername = await verifyMinecraftUsername(minecraftIGN);
-
-        if (verifiedUsername) {
-            try {
-                const socialMedia = await getPlayerSocials(minecraftIGN);
-                const discordTag = interaction.user.tag.toLowerCase();
-
-                if (socialMedia && socialMedia.links && socialMedia.links.DISCORD.toLowerCase() === discordTag) {
-                    linkedAccounts[user.id] = minecraftIGN;
-                    saveLinkedAccounts();
-                    await interaction.reply(`Your Hypixel account ${minecraftIGN} has been successfully linked.`);
-                } else {
-                    await interaction.reply('Your Discord tag does not match the one linked to the Minecraft account. Please link your Discord account on Hypixel.');
-                }
-            } catch (error) {
-                console.error('Error during verification:', error);
-                await interaction.reply('Could not verify the Minecraft username. Please make sure it is correct.');
-            }
-        } else {
-            await interaction.reply('Could not verify the Minecraft username. Please make sure it is correct.');
-        }
-    } else if (commandName === 'ratios') {
-        const gameType = options.getString('gamemode');
-        let playerName = options.getString('player');
-
-        if (!playerName) {
-            if (linkedAccounts[user.id]) {
-                playerName = linkedAccounts[user.id];
-            } else {
-                await interaction.reply('No player specified and no linked account found.');
+        try {
+            const minecraftIGN = options.getString('minecraft_ign');
+            
+            // Validate player name
+            if (!validatePlayerName(minecraftIGN)) {
+                await interaction.reply('Invalid Minecraft username. Usernames must be 3-16 characters and contain only letters, numbers, and underscores.');
                 return;
             }
-        }
+            
+            const verifiedUsername = await verifyMinecraftUsername(minecraftIGN);
 
+            if (verifiedUsername) {
+                try {
+                    const socialMedia = await getPlayerSocials(minecraftIGN);
+                    const discordTag = interaction.user.tag.toLowerCase();
+
+                    if (socialMedia && socialMedia.links && socialMedia.links.DISCORD.toLowerCase() === discordTag) {
+                        linkedAccounts[user.id] = minecraftIGN;
+                        saveLinkedAccounts();
+                        await interaction.reply(`Your Hypixel account ${minecraftIGN} has been successfully linked.`);
+                    } else {
+                        await interaction.reply('Your Discord tag does not match the one linked to the Minecraft account. Please link your Discord account on Hypixel.');
+                    }
+                } catch (error) {
+                    console.error('Error during verification:', error);
+                    await interaction.reply('Could not verify the Minecraft username. Please make sure it is correct.');
+                }
+            } else {
+                await interaction.reply('Could not verify the Minecraft username. Please make sure it is correct.');
+            }
+        } catch (error) {
+            console.error('Error in link command:', error);
+            await interaction.reply({ content: 'An error occurred while linking your account. Please try again later.', ephemeral: true });
+        }
+    } else if (commandName === 'ratios') {
         try {
+            const gameType = options.getString('gamemode');
+            let playerName = options.getString('player');
+
+            if (!playerName) {
+                if (linkedAccounts[user.id]) {
+                    playerName = linkedAccounts[user.id];
+                } else {
+                    await interaction.reply('No player specified and no linked account found.');
+                    return;
+                }
+            }
+
+            // Validate player name
+            if (!validatePlayerName(playerName)) {
+                await interaction.reply('Invalid player name. Minecraft usernames must be 3-16 characters and contain only letters, numbers, and underscores.');
+                return;
+            }
+
             const uuid = await getPlayerUUID(playerName);
 
             let stats = cache[`stats-${playerName}`];
@@ -303,6 +372,10 @@ client.on('interactionCreate', async interaction => {
                 stats = await getLuckyBlockStats(gameType, playerName);
                 if (typeof stats === 'string') {
                     await interaction.reply(stats);
+                    return;
+                }
+                if (stats.error) {
+                    await interaction.reply(stats.error);
                     return;
                 }
                 cache[`stats-${playerName}`] = stats;
@@ -338,7 +411,8 @@ client.on('interactionCreate', async interaction => {
 
             await interaction.reply({ embeds: [ratioEmbed] });
         } catch (error) {
-            await interaction.reply(`Failed to fetch player UUID for ${playerName}.`);
+            console.error('Error in ratios command:', error);
+            await interaction.reply({ content: `Failed to fetch ratios. Please try again later.`, ephemeral: true });
         }
     } else if (commandName === `info`) {
         const user = await client.users.fetch(`781305692371157034`);

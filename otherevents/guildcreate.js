@@ -1,5 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const logchannelid = "1330131850227613777";
+const logchannelid = process.env.LOG_CHANNEL_ID || "1330131850227613777";
 
 module.exports = (client) => {
     client.on('guildCreate', guild => {

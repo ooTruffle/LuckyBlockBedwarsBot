@@ -30,7 +30,7 @@ const commands = [
                 description: 'Display Simplefied stats?',
                 required: false,
                 choices: [
-                    { name: 'True', value: 'True' },
+                    { name: 'True', value: 'true' },
                     { name: 'False', value: 'false' }
                 ]
             },

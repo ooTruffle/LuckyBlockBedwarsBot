@@ -33,7 +33,7 @@ module.exports = {
                 statusIndex = (statusIndex + 1) % statuses.length;
                 client.user.setActivity(statuses[statusIndex].name, {type: statuses[statusIndex].type});
             }, 300000);
-            const logChannel = client.channels.cache.get("1330131811690483764");
+            const logChannel = client.channels.cache.get(process.env.LOG_CHANNEL_ID || "1330131811690483764");
             await logChannel.send(`Bot is Online as ${client.user.tag}`);
         } catch (error) {
             console.error("Error during bot initialization:", error);

@@ -22,15 +22,51 @@ function saveLinkedAccounts() {
 
 
 const cache = {};
+const MAX_CACHE_SIZE = 1000; // Maximum number of cached entries
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Cleanup old cache entries
+function cleanupCache() {
+    const now = Date.now();
+    const keys = Object.keys(cache);
+    
+    // Remove expired entries
+    for (const key of keys) {
+        if (cache[key].timestamp && (now - cache[key].timestamp > CACHE_TTL)) {
+            delete cache[key];
+        }
+    }
+    
+    // If still too large, remove oldest entries
+    const remainingKeys = Object.keys(cache);
+    if (remainingKeys.length > MAX_CACHE_SIZE) {
+        const sortedKeys = remainingKeys.sort((a, b) => {
+            const timeA = cache[a].timestamp || 0;
+            const timeB = cache[b].timestamp || 0;
+            return timeA - timeB;
+        });
+        
+        // Remove oldest entries
+        const keysToRemove = sortedKeys.slice(0, remainingKeys.length - MAX_CACHE_SIZE);
+        for (const key of keysToRemove) {
+            delete cache[key];
+        }
+    }
+}
+
+// Run cleanup every 10 minutes
+setInterval(cleanupCache, 10 * 60 * 1000);
 
 async function cachePlayerData(playerName) {
     const cacheKey = `playerData-${playerName}`;
     const now = Date.now();
 
-    if (cache[cacheKey] && (now - cache[cacheKey].timestamp < 5 * 60 * 1000)) {
+    if (cache[cacheKey] && cache[cacheKey].timestamp && (now - cache[cacheKey].timestamp < CACHE_TTL)) {
         return cache[cacheKey].data;
     }
+    
+    // Cleanup before adding new entry
+    cleanupCache();
 
     const url = `https://api.hypixel.net/player?key=${process.env.HYPIXEL_API_KEY}&name=${playerName}`;
     try {
@@ -140,8 +176,6 @@ async function getLuckyBlockStats(gameType, playerName) {
         "Block Explosion Final Deaths": playerData.stats.Bedwars[`${modePrefix}_block_explosion_final_deaths_bedwars`] || 0,
         "Projectile Final Deaths": playerData.stats.Bedwars[`${modePrefix}_projectile_final_deaths_bedwars`] || 0,
         "Placeable beds collected": playerData.stats.Bedwars[`${modePrefix}_bed_resources_collected_bedwars`] || 0,
-        "Magic Deaths": playerData.stats.Bedwars[`${modePrefix}_magic_deaths_bedwars`] || 0,
-        "Block Explosion Deaths": playerData.stats.Bedwars[`${modePrefix}_block_explosion_deaths_bedwars`] || 0,
         "Falling Block Deaths": playerData.stats.Bedwars[`${modePrefix}_falling_block_deaths_bedwars`] || 0,
         "Falling Block Final Deaths": playerData.stats.Bedwars[`${modePrefix}_falling_block_final_deaths_bedwars`] || 0
     };
@@ -180,7 +214,7 @@ function calculateRatios(stats) {
     const killDeathRatio = stats.Kills / (stats.Deaths || 1);
     const finalKillDeathRatio = stats['Final Kills'] / (stats['Final Deaths'] || 1);
     const VoidKillRatio = stats['Void Kills'] / (stats['Void Deaths'] || 1);
-    const VoidFinalKillRatio = stats['Void Final Deaths'] / (stats['Void Final Deaths'] || 1);
+    const VoidFinalKillRatio = stats['Void Final Kills'] / (stats['Void Final Deaths'] || 1);
 
     return {
         winLossRatio,
