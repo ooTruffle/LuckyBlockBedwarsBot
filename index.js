@@ -96,9 +96,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             const uuid = await getPlayerUUID(playerName);
-            console.log(`UUID: ${uuid}`);
-            const thumbnailUrl = `https://minotar.net/helm/${uuid}.png`;
-            console.log(`Thumbnail URL: ${thumbnailUrl}`);
+
 
             const simpleStatsEmbed = new EmbedBuilder().setColor(`#e4ff00`).setTitle(`Simple stats for ${playerName} in Lucky Block ${gameType}`).addFields({
                 name: 'Winstreak',
@@ -145,7 +143,7 @@ client.on('interactionCreate', async interaction => {
                 iconURL: interaction.user.displayAvatarURL(
                     { dynamic: true }
                 )
-            }).setThumbnail(`https://minotar.net/helm/${uuid}.png`);
+            }).setThumbnail(`https://vzge.me/bust/256/${uuid}.png?y=-40`);
 
             await interaction.reply({ embeds: [simpleStatsEmbed] });
         } else {
@@ -161,9 +159,6 @@ client.on('interactionCreate', async interaction => {
             }
 
             const uuid = await getPlayerUUID(playerName);
-            console.log(`UUID: ${uuid}`);
-            const thumbnailUrl = `https://minotar.net/helm/${uuid}.png`;
-            console.log(`Thumbnail URL: ${thumbnailUrl}`);
             cache[`stats-${playerName}`] = stats;
             const statsEmbed = new EmbedBuilder().setColor(`#e4ff00`).setTitle(`Stats in Lucky Block ${gameType} for ${playerName}`).addFields({
                 name: 'Basic Stats', value: `
@@ -253,7 +248,7 @@ client.on('interactionCreate', async interaction => {
                 iconURL: interaction.user.displayAvatarURL(
                     { dynamic: true }
                 )
-            }).setThumbnail(`https://minotar.net/helm/${uuid}.png`);
+            }).setThumbnail(`https://vzge.me/bust/256/${uuid}.png?y=-40`);
 
             await interaction.reply({ embeds: [statsEmbed] });
         }
@@ -339,7 +334,7 @@ client.on('interactionCreate', async interaction => {
                 iconURL: interaction.user.displayAvatarURL(
                     { dynamic: true }
                 )
-            }).setThumbnail(`https://minotar.net/helm/${uuid}.png`);
+            }).setThumbnail(`https://vzge.me/bust/256/${uuid}.png?y=-40`);
 
             await interaction.reply({ embeds: [ratioEmbed] });
         } catch (error) {
